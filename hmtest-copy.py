@@ -2,6 +2,11 @@ import ast
 import itertools
 from collections import namedtuple
 
+class ASTPrinter(ast.NodeVisitor):
+    def visit(self, node):
+        print(f"{type(node).__name__}: {ast.dump(node, annotate_fields=True)}")
+        self.generic_visit(node)
+printer = ASTPrinter()
 
 class Type:
     def __str__(self):
@@ -126,6 +131,9 @@ class Inferencer:
         if isinstance(node, ast.Num):
             return TInt()
         elif isinstance(node, ast.Constant):
+            print("constant inside", node)
+            printer.visit(node)
+
             if isinstance(node.value, int):
                 return TInt()
             elif isinstance(node.value, bool):
@@ -141,6 +149,7 @@ class Inferencer:
             else:
                 raise Exception(f"Unbound variable {node.id}")
         elif isinstance(node, ast.BinOp):
+            print("bin opt inside")
             left = self.infer(node.left, env)
             right = self.infer(node.right, env)
             # print("binop: ", left, right )
@@ -148,6 +157,8 @@ class Inferencer:
             unify(right, TInt(), self.subst)
             return TInt()
         elif isinstance(node, ast.Lambda):
+            print("lambda inside")
+
             arg_name = node.args.args[0].arg
             arg_type = self.fresh_var()
             new_env = env.clone()
@@ -176,6 +187,7 @@ class Inferencer:
             return apply_subst(ret_type, self.subst)
 
         elif isinstance(node, ast.FunctionDef):
+            print("functiondef inside")
             arg_name = node.args.args[0].arg
             arg_type = self.fresh_var()
             new_env = env.clone()
@@ -185,6 +197,7 @@ class Inferencer:
             env[node.name] = func_type
             return func_type
         elif isinstance(node, ast.Assign):
+            print("assign inside")
             assert len(node.targets) == 1, "Only single assignments supported"
             target = node.targets[0]
             if not isinstance(target, ast.Name):
@@ -193,6 +206,7 @@ class Inferencer:
             env[target.id] = value_type
             return value_type
         elif isinstance(node, ast.Dict):
+            print("dict inside")
             key_types = []
             value_types = []
             for k, v in zip(node.keys, node.values):
@@ -230,6 +244,8 @@ def test_code(code):
     node = ast.parse(code)
     inferencer = Inferencer(hints)
     for stmt in node.body:
+        # printer.visit(stmt)
+
         inferred_type = inferencer.infer(stmt)
         print(f"Inferred type of '{ast.unparse(stmt)}' is: {inferred_type}")
 
@@ -275,15 +291,15 @@ value1 = get_config_value("timeout")
         # 'get_config_value': TFun(TStr(), TStr())  # Optional override
     }
 
-    print("Test 1:")
-    test_code(code1)
-    print("\nTest 2:")
-    test_code(code2)
-    print("\nTest 3:")
-    test_code(code3)
-    print("\nTest 4:")
-    test_code(code4)
-    print("\nTest 5:")
-    test_code(code5)
+    # print("Test 1:")
+    # test_code(code1)
+    # print("\nTest 2:")
+    # test_code(code2)
+    # print("\nTest 3:")
+    # test_code(code3)
+    # print("\nTest 4:")
+    # test_code(code4)
+    # print("\nTest 5:")
+    # test_code(code5)
     print("\nTest 6:")
     test_code(code6)
