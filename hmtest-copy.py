@@ -52,9 +52,10 @@ class TypeEnv(dict):
         return TypeEnv(self)
 
 class TDict(Type):
-    def __init__(self, key_type, value_type):
+    def __init__(self, key_type, value_type, hint=None):
         self.key_type = key_type
         self.value_type = value_type
+        self.hint = hint
 
     def pretty(self):
         return f"Dict[{self.key_type.pretty()}, {self.value_type.pretty()}]"
@@ -115,12 +116,12 @@ def apply_subst(t: Type, subst: dict):
 # === Type Inference ===
 
 class Inferencer:
-    def __init__(self, hints=None):
+    def __init__(self,hint=None):
         self.env = TypeEnv()
         self.subst = {}
-        if hints:
-            self.env.update(hints)
-            print(self.env)
+        self.hint=hint
+        self.function_retrieves_from = {}
+            # print(self.env)
     def fresh_var(self):
         return TVar()
 
@@ -131,8 +132,8 @@ class Inferencer:
         if isinstance(node, ast.Num):
             return TInt()
         elif isinstance(node, ast.Constant):
-            print("constant inside", node)
-            printer.visit(node)
+            # print("constant inside", node)
+            # printer.visit(node)
 
             if isinstance(node.value, int):
                 return TInt()
@@ -149,7 +150,7 @@ class Inferencer:
             else:
                 raise Exception(f"Unbound variable {node.id}")
         elif isinstance(node, ast.BinOp):
-            print("bin opt inside")
+            # print("bin opt inside")
             left = self.infer(node.left, env)
             right = self.infer(node.right, env)
             # print("binop: ", left, right )
@@ -157,7 +158,7 @@ class Inferencer:
             unify(right, TInt(), self.subst)
             return TInt()
         elif isinstance(node, ast.Lambda):
-            print("lambda inside")
+            # print("lambda inside")
 
             arg_name = node.args.args[0].arg
             arg_type = self.fresh_var()
@@ -184,10 +185,23 @@ class Inferencer:
             arg_type = self.infer(node.args[0], env)
             ret_type = self.fresh_var()
             unify(func_type, TFun(arg_type, ret_type), self.subst)
+            if (isinstance(node.func, ast.Name) and 
+                len(node.args) == 1 and 
+                isinstance(node.args[0], ast.Str)):
+                
+                func_name = node.func.id
+                if func_name in self.function_retrieves_from:
+                    dict_name = self.function_retrieves_from[func_name]
+                    if dict_name in env:
+                        dict_type = env[dict_name]
+                        if isinstance(dict_type, TDict) and dict_type.hint:
+                            key = node.args[0].s
+                            if key in dict_type.hint:
+                                return dict_type.hint[key]
             return apply_subst(ret_type, self.subst)
 
         elif isinstance(node, ast.FunctionDef):
-            print("functiondef inside")
+            # print("functiondef inside")
             arg_name = node.args.args[0].arg
             arg_type = self.fresh_var()
             new_env = env.clone()
@@ -195,9 +209,19 @@ class Inferencer:
             body_type = self.infer(node.body[0].value, new_env)  
             func_type = TFun(apply_subst(arg_type, self.subst), apply_subst(body_type, self.subst))
             env[node.name] = func_type
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Return):
+                ret_expr = node.body[0].value
+                if ret_expr is not None:
+                    if (isinstance(ret_expr, ast.Call) and
+                        isinstance(ret_expr.func, ast.Attribute) and
+                        ret_expr.func.attr == "get" and
+                        isinstance(ret_expr.func.value, ast.Name)):
+                        
+                        dict_name = ret_expr.func.value.id
+                        self.function_retrieves_from[node.name] = dict_name
             return func_type
         elif isinstance(node, ast.Assign):
-            print("assign inside")
+            # print("assign inside")
             assert len(node.targets) == 1, "Only single assignments supported"
             target = node.targets[0]
             if not isinstance(target, ast.Name):
@@ -206,7 +230,7 @@ class Inferencer:
             env[target.id] = value_type
             return value_type
         elif isinstance(node, ast.Dict):
-            print("dict inside")
+            # print("dict inside")
             key_types = []
             value_types = []
             for k, v in zip(node.keys, node.values):
@@ -233,16 +257,15 @@ class Inferencer:
                     return TUnion(unique)
 
             value_type = make_union(value_types)
-            return TDict(apply_subst(key_type, self.subst), value_type)
-
+            return TDict(apply_subst(key_type, self.subst), value_type, self.hint)
         else:
             raise Exception(f"Unknown AST node: {ast.dump(node)}")
 
 # === Testing ===
 
-def test_code(code):
+def test_code(code, hint=None):
     node = ast.parse(code)
-    inferencer = Inferencer(hints)
+    inferencer = Inferencer(hint)
     for stmt in node.body:
         # printer.visit(stmt)
 
@@ -290,16 +313,17 @@ value1 = get_config_value("timeout")
         "my_config": TDict(TStr(), TUnion([TInt(), TStr()])),
         # 'get_config_value': TFun(TStr(), TStr())  # Optional override
     }
+    hint = {"timeout": TStr(), "retries": TInt()}  
 
-    # print("Test 1:")
-    # test_code(code1)
-    # print("\nTest 2:")
-    # test_code(code2)
-    # print("\nTest 3:")
-    # test_code(code3)
-    # print("\nTest 4:")
-    # test_code(code4)
-    # print("\nTest 5:")
-    # test_code(code5)
+    print("Test 1:")
+    test_code(code1)
+    print("\nTest 2:")
+    test_code(code2)
+    print("\nTest 3:")
+    test_code(code3)
+    print("\nTest 4:")
+    test_code(code4)
+    print("\nTest 5:")
+    test_code(code5)
     print("\nTest 6:")
-    test_code(code6)
+    test_code(code6,hint)
