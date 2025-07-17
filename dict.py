@@ -250,7 +250,7 @@ f = lambda z: z * 2
 """
     code6 = """
 my_config = {
-    "timeout": "dfd",
+    "timeout": 4,
     "retries": 10
 }
 
