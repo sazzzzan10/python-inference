@@ -1,5 +1,4 @@
 import ast
-from collections import namedtuple
 from typespy import *
 from Inferencer import *
 
