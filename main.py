@@ -38,7 +38,7 @@ f = lambda z: z * 2
     code6="""
 new_dict = {
     "val1": 1,
-    "val2": "2"
+    "val2": 2
 }
 """
 

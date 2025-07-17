@@ -57,14 +57,14 @@ class TDict(Type):
 class TUnion(Type):
     def __init__(self, options): 
         self.options = options
-    def pretty(self): 
-        return " | ".join(t.pretty() for t in self.options)
-    # def pretty(self):
-    #     new_set=set(map(str,self.types))
-    #     if len(new_set) > 1:
-    #         return " | ".join(map(str, self.types))
-    #     else:
-    #         return self.types[0]
+    # def pretty(self): 
+    #     return " | ".join(t.pretty() for t in self.options)
+    def pretty(self):
+        new_set=set(map(str,self.options))
+        if len(new_set) > 1:
+            return " | ".join(map(str, self.options))
+        else:
+            return self.options[0]
     def __eq__(self, other):
-        return isinstance(other, TUnion) and set(self.types) == set(other.types)
+        return isinstance(other, TUnion) and set(self.options) == set(other.options)
 
