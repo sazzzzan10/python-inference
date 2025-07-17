@@ -1,6 +1,5 @@
 import ast
 import itertools
-from collections import namedtuple
 
 
 class Type:
