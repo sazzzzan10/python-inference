@@ -43,26 +43,26 @@ new_dict = {
 
     code7 = """
 my_config = {
-    "timeout": "dfd",
-    "retries": 10
+    "key1": "dfd",
+    "key2": 10
 }
 def get_config_value(key_name):
     return my_config.get(key_name)
 
-value1 = get_config_value("timeout")
+value1 = get_config_value("key1")
 """
     code8 = """
 my_config = {
-    "timeout": "dfd",
-    "retries": 10
+    "key1": "dfd",
+    "key2": 10
 }
 def get_config_value(key_name):
     return my_config[key_name]
 
-value1 = get_config_value("timeout")
+value1 = get_config_value("key1")
 """
 
-    hint = {"timeout": TStr(), "retries": TInt()}  
+    hint = {"key1": TStr(), "key2": TInt()}  
 
     print("Test 1:")
     test_code(code1)
