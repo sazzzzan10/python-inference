@@ -7,6 +7,7 @@ printer = ASTPrinter()
 def test_code(code, hint=None):
     node = ast.parse(code)
     inferencer = Inferencer(hint)
+    print(ast.dump(node))
     for stmt in node.body:
         # printer.visit(stmt)
         inferred_type = inferencer.infer(stmt)

@@ -78,7 +78,7 @@ class Inferencer:
             if (isinstance(node.func, ast.Name) and #this part is visited on calling the function which returns dict 
                 len(node.args) == 1 and 
                 isinstance(node.args[0], ast.Str)):
-                
+                print("function name", ast.dump(node))
                 func_name = node.func.id
                 if func_name in self.function_retrieves_from: #checking if function retrieve has value, it links the function to dict which is to be returned, then it should have been stored in env along with hint which stores the corresponding types for each keys
                     dict_name = self.function_retrieves_from[func_name]

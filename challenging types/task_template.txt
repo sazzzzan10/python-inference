@@ -1,0 +1,25 @@
+Given a python file, a stub file is a .pyi file that contains only the typing information.
+Here is an example of an input python file that is missing typing information:
+---------------------------------------------------
+class Greeter:
+  def __init__(self, name) :
+     self.name = name
+     def greet(self):
+        return f"Hello, {self.name}!"
+     def get_name(self):
+        return self.name
+-----------------------------------------------------
+Here is the correct stub file generated for the above python file:
+-----------------------------------------------------
+class Greeter:
+  def __init__(self, name: str) -> None: ...
+  def greet(self) -> str: ...
+  def get_name(self) -> List[str]: ...
+-----------------------------------------------------
+Your task is to infer the missing typing information and generate a stub file(.pyi) for a newly given python file.
+You must generate the stub file in markdown format: python ↵ <stub content> ↵ .
+The generated content must be a valid python file with no syntax error.
+Note that relevent import statements should be included in the stub file. Also at the end tell me if there are any challenging types because of complexities like dependent types, polymorphism, subtyping and other such complexities and point out the code. If not just tell me there aren't.
+Here is the python file for your task:
+------------------------------------------------------
+{Contents to be added from a python file}
